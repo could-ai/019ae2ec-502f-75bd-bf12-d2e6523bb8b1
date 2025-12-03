@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:couldai_user_app/core/app_colors.dart';
 import 'package:couldai_user_app/models/product.dart';
+import 'package:couldai_user_app/services/cart_service.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final Product product;
@@ -60,7 +61,14 @@ class ProductDetailScreen extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.favorite_border, color: Colors.white),
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Added to Wishlist'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -127,7 +135,24 @@ class ProductDetailScreen extends StatelessWidget {
                             ],
                           ),
                           ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              CartService().addToCart(product);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${product.name} added to cart'),
+                                  backgroundColor: AppColors.primaryGold,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  action: SnackBarAction(
+                                    label: 'UNDO',
+                                    textColor: AppColors.backgroundBlack,
+                                    onPressed: () {
+                                      CartService().removeFromCart(product);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryGold,
                               foregroundColor: AppColors.backgroundBlack,

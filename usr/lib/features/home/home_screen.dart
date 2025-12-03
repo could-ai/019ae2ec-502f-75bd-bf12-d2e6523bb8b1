@@ -2,9 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:couldai_user_app/core/app_colors.dart';
 import 'package:couldai_user_app/models/product.dart';
 import 'package:couldai_user_app/features/product/product_detail_screen.dart';
+import 'package:couldai_user_app/features/cart/cart_screen.dart';
+import 'package:couldai_user_app/services/cart_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _selectedCategory = 'All';
+  final List<String> _categories = ['All', 'Watches', 'Footwear', 'Audio', 'Apparel'];
+
+  List<Product> get _filteredProducts {
+    if (_selectedCategory == 'All') {
+      return mockProducts;
+    }
+    return mockProducts.where((p) => p.category == _selectedCategory).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +30,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
+        title: const Text(
           'AURION',
           style: TextStyle(
             color: AppColors.primaryGold,
@@ -26,9 +43,44 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.search, color: AppColors.textLight),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textLight),
-            onPressed: () {},
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.textLight),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartScreen()),
+                  );
+                },
+              ),
+              ListenableBuilder(
+                listenable: CartService(),
+                builder: (context, child) {
+                  final count = CartService().items.length;
+                  if (count == 0) return const SizedBox.shrink();
+                  return Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryGold,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: AppColors.backgroundBlack,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -38,16 +90,21 @@ class HomeScreen extends StatelessWidget {
           // Category Filter (Horizontal Scroll)
           SizedBox(
             height: 60,
-            child: ListView(
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildCategoryChip('All', isSelected: true),
-                _buildCategoryChip('Watches'),
-                _buildCategoryChip('Footwear'),
-                _buildCategoryChip('Audio'),
-                _buildCategoryChip('Apparel'),
-              ],
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = category;
+                    });
+                  },
+                  child: _buildCategoryChip(category, isSelected: _selectedCategory == category),
+                );
+              },
             ),
           ),
           
@@ -55,9 +112,9 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: mockProducts.length,
+              itemCount: _filteredProducts.length,
               itemBuilder: (context, index) {
-                final product = mockProducts[index];
+                final product = _filteredProducts[index];
                 return _buildProductCard(context, product);
               },
             ),
